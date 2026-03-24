@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TripSense</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.78);
+      --panel2: rgba(30, 41, 59, 0.45);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --line: rgba(148,163,184,.18);
+      --cyan: #22d3ee;
+      --green: #34d399;
+      --amber: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, rgba(34,211,238,.12), transparent 28%), radial-gradient(circle at 80% 20%, rgba(99,102,241,.12), transparent 22%), var(--bg);
+      color: var(--text);
+    }
+    a { color: inherit; }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 24px; }
+    .topbar, .card, .input, .tab, .btn, .badge, .suggestions, .row-card {
+      border: 1px solid var(--line);
+    }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 14px 18px; border-radius: 28px; background: rgba(255,255,255,.04); backdrop-filter: blur(10px);
+      position: sticky; top: 18px; z-index: 20;
+    }
+    .brand { display: flex; gap: 12px; align-items: center; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-weight: 700;
+      background: linear-gradient(135deg, #22d3ee, #6366f1);
+      box-shadow: 0 12px 26px rgba(34,211,238,.18);
+      color: white;
+    }
+    .brand h1 { font-size: 16px; margin: 0; }
+    .brand p { font-size: 12px; color: var(--muted); margin: 0; }
+    .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab, .btn {
+      background: rgba(15,23,42,.6); color: var(--text); border-radius: 999px; padding: 10px 14px; cursor: pointer;
+      font-size: 14px;
+    }
+    .tab.active, .btn.primary { background: white; color: #020617; }
+    .hero {
+      display: grid; grid-template-columns: 1.2fr 0.9fr; gap: 28px; margin-top: 28px; align-items: center;
+    }
+    .hero h2 { font-size: clamp(36px, 6vw, 60px); line-height: 1.05; margin: 0 0 16px; }
+    .hero p { color: var(--muted); font-size: 18px; line-height: 1.7; margin: 0 0 20px; }
+    .hero-actions { display:flex; gap:12px; flex-wrap: wrap; }
+    .grid4 { display:grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-top: 22px; }
+    .stat { background: rgba(255,255,255,.04); border:1px solid var(--line); border-radius: 22px; padding: 16px; }
+    .stat small { color: var(--cyan); text-transform: uppercase; letter-spacing: .14em; }
+    .hero-panel, .section-panel { background: rgba(255,255,255,.04); border:1px solid var(--line); border-radius: 30px; padding: 18px; }
+    .hero-panel .mini { background: rgba(2,6,23,.7); border:1px solid var(--line); border-radius: 24px; padding: 16px; }
+    .section { margin-top: 34px; }
+    .section h3 { font-size: 32px; margin: 0 0 10px; }
+    .section > p { color: var(--muted); margin: 0 0 16px; line-height: 1.7; }
+    .search-box { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; }
+    .field label { display:block; font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+    .input {
+      width: 100%; background: rgba(2,6,23,.78); color: white; border-radius: 18px; padding: 13px 14px; outline: none;
+    }
+    select.input { appearance: none; }
+    .field.span2 { grid-column: span 2; }
+    .field.span4 { grid-column: span 4; }
+    .field.actions { display:flex; align-items:end; }
+    .suggest-wrap { position: relative; }
+    .suggestions {
+      position:absolute; top: calc(100% + 8px); left:0; right:0; background:#020617; border-radius: 20px; overflow:hidden; z-index: 15;
+      max-height: 290px; overflow-y: auto;
+    }
+    .sug { display:flex; justify-content: space-between; gap: 12px; padding: 12px 14px; cursor:pointer; background: transparent; color: white; border: 0; width: 100%; text-align:left; }
+    .sug:hover { background: rgba(255,255,255,.05); }
+    .badge { display:inline-block; padding: 4px 10px; font-size: 12px; border-radius: 999px; background: rgba(255,255,255,.04); color: var(--muted); }
+    .badge.green { color: #a7f3d0; background: rgba(16,185,129,.12); }
+    .badge.cyan { color: #a5f3fc; background: rgba(34,211,238,.12); }
+    .badge.amber { color: #fde68a; background: rgba(245,158,11,.12); }
+    .mode-tabs { display:flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .two { display:grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+    .stack { display:grid; gap: 14px; }
+    .card { background: rgba(255,255,255,.04); border-radius: 26px; padding: 18px; }
+    .card h4 { margin: 0 0 6px; font-size: 20px; }
+    .muted { color: var(--muted); }
+    .row-card { display:flex; justify-content: space-between; gap: 14px; align-items: center; background: rgba(255,255,255,.04); border-radius: 20px; padding: 14px; }
+    .row-card + .row-card { margin-top: 10px; }
+    .cta-group { display:flex; gap: 8px; flex-wrap: wrap; }
+    .btn.secondary { background: rgba(255,255,255,.06); color: white; }
+    .hide { display:none !important; }
+    .list2 { display:grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+    .notice { border-radius: 20px; padding: 14px; background: rgba(245,158,11,.12); color: #fde68a; border: 1px solid rgba(245,158,11,.2); }
+    .ok { color: #a7f3d0; }
+    .warn { color: #fde68a; }
+    code { background: rgba(255,255,255,.06); padding: 2px 6px; border-radius: 8px; }
+    @media (max-width: 980px) {
+      .hero, .two, .search-box, .grid4, .list2 { grid-template-columns: 1fr !important; }
+      .field.span2, .field.span4 { grid-column: span 1; }
+      .topbar { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">T</div>
+        <div>
+          <h1>TripSense</h1>
+          <p>Travel metasearch + AI trip planner</p>
+        </div>
+      </div>
+      <div class="nav" id="nav"></div>
+      <div class="badge cyan" id="health-badge">Checking API…</div>
+    </div>
+
+    <div class="hero">
+      <div>
+        <div class="badge cyan">Working website starter</div>
+        <h2>Search cities globally, compare travel options, and build a trip in one place.</h2>
+        <p>This version runs as a real website with a backend. It already supports global autocomplete, search flows, trip building, saved trips, and price watches. Provider data is still mock until you attach live travel APIs.</p>
+        <div class="hero-actions">
+          <button class="btn primary" data-page="discover">Use the search</button>
+          <button class="btn secondary" data-page="system">See system</button>
+        </div>
+        <div class="grid4" id="stats"></div>
+      </div>
+      <div class="hero-panel">
+        <div class="mini">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;">
+            <div>
+              <strong>System status</strong><br>
+              <span class="muted" style="font-size:13px;">Frontend + backend are connected</span>
+            </div>
+            <span class="badge" id="mode-badge">mode</span>
+          </div>
+          <div class="row-card"><span>Origin</span><strong id="summary-origin">New York, USA</strong></div>
+          <div class="row-card"><span>Destination</span><strong id="summary-destination">Lisbon, Portugal</strong></div>
+          <div class="row-card"><span>Travel month</span><strong id="summary-month">May</strong></div>
+          <div class="row-card"><span>Budget</span><strong id="summary-budget">$1,500</strong></div>
+          <div class="notice" style="margin-top:12px;">To make this fully live online with real-time prices, the next replacement is only the provider layer inside the backend.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-discover" class="section">
+      <h3>Core search flow</h3>
+      <p>Users can search flights, hotels, cars, or activities directly, or switch to AI trip building. Inputs use global city/airport autocomplete.</p>
+      <div class="section-panel">
+        <div class="mode-tabs" id="mode-tabs"></div>
+        <form id="search-form" class="search-box">
+          <div class="field span2 suggest-wrap">
+            <label>Origin</label>
+            <input id="origin-input" class="input" placeholder="Search any city or airport" autocomplete="off" />
+            <div id="origin-suggestions" class="suggestions hide"></div>
+          </div>
+          <div class="field span2 suggest-wrap">
+            <label>Destination</label>
+            <input id="destination-input" class="input" placeholder="Search any city or airport" autocomplete="off" />
+            <div id="destination-suggestions" class="suggestions hide"></div>
+          </div>
+          <div class="field">
+            <label>Month</label>
+            <select id="month-input" class="input">
+              <option>May</option>
+              <option>June</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Budget</label>
+            <input id="budget-input" class="input" value="1500" />
+          </div>
+          <div class="field">
+            <label>Travelers</label>
+            <input id="travelers-input" class="input" type="number" min="1" value="2" />
+          </div>
+          <div class="field">
+            <label>Nights</label>
+            <input id="nights-input" class="input" type="number" min="1" value="5" />
+          </div>
+          <div class="field span4">
+            <label>Trip vibe</label>
+            <input id="vibe-input" class="input" value="Warm + food + easy planning" />
+          </div>
+          <div class="field actions span2">
+            <button class="btn primary" style="width:100%;" type="submit" id="run-search-btn">Run search</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="page-results" class="section hide">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap;">
+        <div>
+          <h3>Results</h3>
+          <p id="results-subtitle">Search output will appear here.</p>
+        </div>
+        <button class="btn secondary" id="save-trip-btn">Save current trip</button>
+      </div>
+      <div id="results-container"></div>
+    </div>
+
+    <div id="page-saved" class="section hide">
+      <h3>Saved trips</h3>
+      <p>Trip plans saved in the browser for now. In production they should live in a database.</p>
+      <div id="saved-container"></div>
+    </div>
+
+    <div id="page-watch" class="section hide">
+      <h3>Price watch</h3>
+      <p>Watches and alerts are running on the client in this starter. Later they should move to backend jobs and notifications.</p>
+      <div class="two">
+        <div class="card"><h4>Active watches</h4><div id="watchlist-container"></div></div>
+        <div class="card"><h4>Latest alerts</h4><div id="alerts-container"></div></div>
+      </div>
+    </div>
+
+    <div id="page-system" class="section hide">
+      <h3>System</h3>
+      <p>This is the handoff map for making the app fully live online.</p>
+      <div class="two">
+        <div class="card">
+          <h4>Current backend endpoints</h4>
+          <div class="stack">
+            <div class="row-card"><div><strong>GET /api/health</strong><div class="muted">service status</div></div></div>
+            <div class="row-card"><div><strong>GET /api/locations/autocomplete</strong><div class="muted">global city / airport suggestions</div></div></div>
+            <div class="row-card"><div><strong>POST /api/search</strong><div class="muted">search inventory by mode</div></div></div>
+            <div class="row-card"><div><strong>POST /api/trip/build</strong><div class="muted">trip assembly endpoint</div></div></div>
+            <div class="row-card"><div><strong>POST /api/watch</strong><div class="muted">store price watch</div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h4>Still needed for real-time global prices</h4>
+          <div class="stack">
+            <div class="row-card"><div><strong>Provider credentials</strong><div class="muted">Amadeus, Booking Demand API, Viator, etc.</div></div></div>
+            <div class="row-card"><div><strong>Provider adapters</strong><div class="muted">replace mock arrays in backend with real API calls</div></div></div>
+            <div class="row-card"><div><strong>Database + auth</strong><div class="muted">users, saved trips, watchlists</div></div></div>
+            <div class="row-card"><div><strong>Notifications</strong><div class="muted">email, push, Telegram</div></div></div>
+            <div class="row-card"><div><strong>Deployment</strong><div class="muted">domain, server, secrets, monitoring</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const state = {
+  page: 'discover',
+  mode: 'ai',
+  origin: { code: 'NYC', city: 'New York', label: 'New York, USA' },
+  destination: { code: 'LIS', city: 'Lisbon', label: 'Lisbon, Portugal' },
+  month: 'May',
+  budget: 1500,
+  travelers: 2,
+  nights: 5,
+  vibe: 'Warm + food + easy planning',
+  inventory: { flights: [], hotels: [], cars: [], activities: [] },
+  trip: null,
+  savedTrips: JSON.parse(localStorage.getItem('tripsense_saved_trips') || '[]'),
+  alerts: JSON.parse(localStorage.getItem('tripsense_alerts') || '[]'),
+  watchlist: JSON.parse(localStorage.getItem('tripsense_watchlist') || '[]'),
+  backendMode: 'unknown',
+};
+
+const navPages = [
+  ['discover', 'Discover'],
+  ['results', 'Results'],
+  ['saved', 'Saved trips'],
+  ['watch', 'Price watch'],
+  ['system', 'System']
+];
+const searchModes = [
+  ['ai', 'AI build my trip'],
+  ['flights', 'Flights'],
+  ['hotels', 'Hotels'],
+  ['cars', 'Cars'],
+  ['activities', 'Activities']
+];
+
+const nav = document.getElementById('nav');
+const modeTabs = document.getElementById('mode-tabs');
+navPages.forEach(([id, label]) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab';
+  btn.textContent = label;
+  btn.onclick = () => setPage(id);
+  btn.dataset.page = id;
+  nav.appendChild(btn);
+});
+searchModes.forEach(([id, label]) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab';
+  btn.textContent = label;
+  btn.onclick = () => { state.mode = id; updateTabs(); if (state.page === 'results') renderResults(); };
+  btn.dataset.mode = id;
+  modeTabs.appendChild(btn);
+});
+document.querySelectorAll('[data-page]').forEach(btn => btn.addEventListener('click', () => setPage(btn.dataset.page)));
+
+document.getElementById('origin-input').value = state.origin.city;
+document.getElementById('destination-input').value = state.destination.city;
+
+function saveBrowserState() {
+  localStorage.setItem('tripsense_saved_trips', JSON.stringify(state.savedTrips));
+  localStorage.setItem('tripsense_alerts', JSON.stringify(state.alerts));
+  localStorage.setItem('tripsense_watchlist', JSON.stringify(state.watchlist));
+}
+
+function money(v) { return `$${Number(v || 0).toLocaleString()}`; }
+function uid() { return Math.random().toString(36).slice(2, 9); }
+
+function setPage(page) {
+  state.page = page;
+  nav.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.page === page));
+  ['discover','results','saved','watch','system'].forEach(id => {
+    document.getElementById(`page-${id}`).classList.toggle('hide', id !== page);
+  });
+  if (page === 'saved') renderSaved();
+  if (page === 'watch') renderWatch();
+}
+
+function updateTabs() {
+  modeTabs.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === state.mode));
+}
+
+function updateStats() {
+  const statsEl = document.getElementById('stats');
+  statsEl.innerHTML = '';
+  [
+    ['Data mode', state.backendMode],
+    ['Saved trips', String(state.savedTrips.length)],
+    ['Price watches', String(state.watchlist.length)],
+    ['Alerts', String(state.alerts.length)]
+  ].forEach(([label, value]) => {
+    const div = document.createElement('div');
+    div.className = 'stat';
+    div.innerHTML = `<small>${label}</small><div style="margin-top:8px;font-size:18px;font-weight:600;">${value}</div>`;
+    statsEl.appendChild(div);
+  });
+}
+
+function updateSummary() {
+  document.getElementById('summary-origin').textContent = state.origin.label;
+  document.getElementById('summary-destination').textContent = state.destination.label;
+  document.getElementById('summary-month').textContent = state.month;
+  document.getElementById('summary-budget').textContent = money(state.budget);
+}
+
+async function checkHealth() {
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    state.backendMode = data.mode || 'mock';
+    document.getElementById('health-badge').textContent = `Backend ${state.backendMode}`;
+    document.getElementById('health-badge').className = `badge ${state.backendMode === 'live' ? 'green' : 'amber'}`;
+    document.getElementById('mode-badge').textContent = state.backendMode === 'live' ? 'Live API mode' : 'Mock backend mode';
+    document.getElementById('mode-badge').className = `badge ${state.backendMode === 'live' ? 'green' : 'amber'}`;
+  } catch {
+    state.backendMode = 'offline';
+    document.getElementById('health-badge').textContent = 'Backend offline';
+    document.getElementById('health-badge').className = 'badge amber';
+    document.getElementById('mode-badge').textContent = 'Backend unavailable';
+    document.getElementById('mode-badge').className = 'badge amber';
+  }
+  updateStats();
+}
+
+async function autocomplete(query, container, kind) {
+  if (!query || query.trim().length < 2) {
+    container.classList.add('hide');
+    container.innerHTML = '';
+    return;
+  }
+  const res = await fetch(`/api/locations/autocomplete?q=${encodeURIComponent(query)}`);
+  const items = await res.json();
+  container.innerHTML = '';
+  items.forEach(item => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sug';
+    btn.innerHTML = `<div><div style="font-weight:600;">${item.label}</div><div class="muted" style="font-size:12px;">${item.airports.join(', ')} · ${item.code}</div></div><span class="badge">${item.country}</span>`;
+    btn.onclick = () => {
+      if (kind === 'origin') {
+        state.origin = item;
+        document.getElementById('origin-input').value = item.city;
+      } else {
+        state.destination = item;
+        document.getElementById('destination-input').value = item.city;
+      }
+      updateSummary();
+      container.classList.add('hide');
+      container.innerHTML = '';
+    };
+    container.appendChild(btn);
+  });
+  container.classList.toggle('hide', items.length === 0);
+}
+
+const originInput = document.getElementById('origin-input');
+const destInput = document.getElementById('destination-input');
+originInput.addEventListener('input', e => autocomplete(e.target.value, document.getElementById('origin-suggestions'), 'origin'));
+destInput.addEventListener('input', e => autocomplete(e.target.value, document.getElementById('destination-suggestions'), 'destination'));
+document.addEventListener('click', e => {
+  if (!e.target.closest('.suggest-wrap')) {
+    document.getElementById('origin-suggestions').classList.add('hide');
+    document.getElementById('destination-suggestions').classList.add('hide');
+  }
+});
+
+document.getElementById('search-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  state.month = document.getElementById('month-input').value;
+  state.budget = Number(document.getElementById('budget-input').value || 0);
+  state.travelers = Number(document.getElementById('travelers-input').value || 1);
+  state.nights = Number(document.getElementById('nights-input').value || 1);
+  state.vibe = document.getElementById('vibe-input').value;
+  updateSummary();
+  const btn = document.getElementById('run-search-btn');
+  btn.textContent = 'Searching...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/search', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        originCode: state.origin.code,
+        destinationCode: state.destination.code,
+        month: state.month,
+        travelers: state.travelers,
+        nights: state.nights,
+        budget: state.budget,
+        vibe: state.vibe,
+        mode: state.mode
+      })
+    });
+    state.inventory = await res.json();
+    const tripRes = await fetch('/api/trip/build', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        originCode: state.origin.code,
+        destinationCode: state.destination.code,
+        month: state.month,
+        travelers: state.travelers,
+        nights: state.nights,
+        budget: state.budget,
+        vibe: state.vibe,
+        mode: state.mode
+      })
+    });
+    state.trip = await tripRes.json();
+    addAlert(`Search refreshed for ${state.origin.city} → ${state.destination.city}.`, 'info');
+    setPage('results');
+    renderResults();
+  } finally {
+    btn.textContent = 'Run search';
+    btn.disabled = false;
+  }
+});
+
+function addAlert(text, type='info') {
+  state.alerts.unshift({ id: uid(), text, type });
+  state.alerts = state.alerts.slice(0, 8);
+  saveBrowserState();
+  updateStats();
+}
+
+function addWatch(item, type) {
+  const target = type === 'flight' ? Math.max(50, item.price - 30) : Math.max(35, item.price - 15);
+  const exists = state.watchlist.some(w => w.type === type && w.refId === item.id);
+  if (exists) return;
+  state.watchlist.unshift({
+    id: uid(), refId: item.id, type, label: type === 'flight' ? `${state.origin.city} → ${state.destination.city}` : item.name, target, current: item.price, triggered: false
+  });
+  saveBrowserState();
+  addAlert(`${type === 'flight' ? 'Flight' : 'Hotel'} watch started.`, 'success');
+  renderWatch();
+}
+
+function openLinkNotice() {
+  addAlert('In production this button opens an affiliate deep link.', 'info');
+}
+
+function renderResults() {
+  const root = document.getElementById('results-container');
+  const subtitle = document.getElementById('results-subtitle');
+  subtitle.textContent = `Showing ${state.mode} results for ${state.origin.city} → ${state.destination.city} in ${state.month}.`;
+  root.innerHTML = '';
+
+  if (state.mode === 'ai' && state.trip) {
+    const left = document.createElement('div'); left.className = 'card';
+    left.innerHTML = `
+      <h4>${state.trip.headline}</h4>
+      <div class="muted">${state.trip.summary}</div>
+      <div class="row-card" style="margin-top:14px;"><div><strong>Primary flight</strong><div class="muted">${state.trip.flightPrimary ? `${state.origin.city} → ${state.destination.city} · ${state.trip.flightPrimary.duration} · ${state.trip.flightPrimary.stops}` : 'No flight suggestion yet'}</div></div><span class="badge cyan">${state.trip.flightPrimary ? money(state.trip.flightPrimary.price) : '—'}</span></div>
+      <div class="row-card"><div><strong>Primary stay</strong><div class="muted">${state.trip.stayPrimary ? `${state.trip.stayPrimary.name} · ${state.trip.stayPrimary.area} · rating ${state.trip.stayPrimary.rating}` : 'No stay suggestion yet'}</div></div><span class="badge cyan">${state.trip.stayPrimary ? `${money(state.trip.stayPrimary.price)}/night` : '—'}</span></div>
+      <div class="card" style="padding:14px;margin-top:14px;background:rgba(255,255,255,.03);">
+        <strong>Trip highlights</strong>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">${(state.trip.destination?.city && state.trip.itinerary ? state.trip.itinerary.slice(0,0) : []).join('')}</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">${['estimated', 'planned'].slice(0,0).join('')}</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">${(state.trip.itinerary ? [] : []).join('')}</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">${(state.trip.itinerary || []).length ? '' : ''}</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">${(state.trip.destination ? [] : []).join('')}</div>
+      </div>
+      <div class="card" style="padding:14px;margin-top:14px;background:rgba(255,255,255,.03);">
+        <strong>Draft itinerary</strong>
+        <div style="margin-top:10px;display:grid;gap:8px;">${state.trip.itinerary.map(line => `<div>• ${line}</div>`).join('')}</div>
+      </div>
+      <div class="row-card" style="margin-top:14px;"><div><strong>Budget status</strong><div class="muted">${state.trip.budgetStatus}</div></div><span class="badge ${state.trip.budgetStatus.includes('Within') ? 'green' : 'amber'}">${money(state.trip.estimatedTotal)}</span></div>
+    `;
+    // add highlights separately to avoid escaped messy template logic
+    const highWrap = document.createElement('div');
+    highWrap.style.marginTop = '10px';
+    highWrap.style.display = 'flex';
+    highWrap.style.gap = '8px';
+    highWrap.style.flexWrap = 'wrap';
+    [state.destination.city, state.month, `${state.nights} nights`, ...((state.trip.destination && state.trip.destination.city) ? [] : [])].forEach(() => {});
+    const noteMap = {
+      LIS: ['Baixa and Chiado', 'Sintra day trip', 'Seafood and wine bars'],
+      BCN: ['Eixample architecture', 'Beach afternoons', 'Tapas neighborhoods'],
+      CUN: ['Resort zone', 'Boat day', 'Easy transfers'],
+      PAR: ['Saint-Germain', 'Seine nights', 'Museum-heavy days'],
+      ROM: ['Trastevere', 'Historic core', 'Long dinners'],
+      ATH: ['Plaka', 'Acropolis', 'Rooftop evenings'],
+      LON: ['Museum districts', 'Theatre nights', 'Classic neighborhoods'],
+      TYO: ['Night food culture', 'District hopping', 'Design and tech'],
+      DXB: ['Marina skyline', 'Beach clubs', 'Desert trips']
+    };
+    (noteMap[state.destination.code] || ['Flexible', 'Walkable', 'Easy planning']).forEach(h => {
+      const s = document.createElement('span'); s.className = 'badge'; s.textContent = h; highWrap.appendChild(s);
+    });
+    left.querySelector('.card').appendChild(highWrap);
+
+    const right = document.createElement('div'); right.className = 'card';
+    right.innerHTML = '<h4>Booking blocks</h4><div class="muted">These become affiliate destinations in production.</div>';
+    [...state.inventory.flights.slice(0,2).map(item => ['flight', item]), ...state.inventory.hotels.slice(0,2).map(item => ['hotel', item]), ...state.inventory.activities.slice(0,2).map(item => ['activity', item])].forEach(([kind, item]) => {
+      const row = document.createElement('div'); row.className = 'row-card';
+      const title = kind === 'flight' ? `Flight · ${state.origin.city} → ${state.destination.city}` : kind === 'hotel' ? `Hotel · ${item.name}` : `Activity · ${item.name}`;
+      const sub = kind === 'flight' ? `${item.duration} · ${item.stops} · ${item.provider}` : kind === 'hotel' ? `${item.area} · rating ${item.rating} · ${item.provider}` : `${item.type} · ${item.provider}`;
+      const price = kind === 'hotel' ? `${money(item.price)}/night` : money(item.price);
+      row.innerHTML = `<div><strong>${title}</strong><div class="muted">${sub}</div></div>`;
+      const grp = document.createElement('div'); grp.className = 'cta-group';
+      const b = document.createElement('span'); b.className = 'badge cyan'; b.textContent = price; grp.appendChild(b);
+      if (kind === 'flight' || kind === 'hotel') { const w = document.createElement('button'); w.className='btn secondary'; w.textContent='Watch'; w.onclick=()=>addWatch(item, kind); grp.appendChild(w); }
+      const open = document.createElement('button'); open.className='btn secondary'; open.textContent='Open link'; open.onclick=openLinkNotice; grp.appendChild(open);
+      row.appendChild(grp); right.appendChild(row);
+    });
+
+    const grid = document.createElement('div'); grid.className = 'two'; grid.append(left, right); root.appendChild(grid);
+    return;
+  }
+
+  if (!state.inventory[state.mode] || state.inventory[state.mode].length === 0) {
+    const empty = document.createElement('div'); empty.className = 'card'; empty.textContent = 'No results matched these parameters.'; root.appendChild(empty); return;
+  }
+
+  const list = document.createElement('div'); list.className = 'list2';
+  state.inventory[state.mode].forEach(item => {
+    const card = document.createElement('div'); card.className = 'card';
+    let title='', subtitle='', price='';
+    if (state.mode === 'flights') { title = `${state.origin.city} → ${state.destination.city}`; subtitle = `${item.month} · ${item.duration} · ${item.stops} · ${item.provider}`; price = money(item.price); }
+    if (state.mode === 'hotels') { title = item.name; subtitle = `${state.destination.city} · ${item.area} · ${item.style} · rating ${item.rating}`; price = `${money(item.price)}/night`; }
+    if (state.mode === 'cars') { title = `${item.company} · ${item.type}`; subtitle = `${state.destination.city} pickup`; price = `${money(item.daily)}/day`; }
+    if (state.mode === 'activities') { title = item.name; subtitle = `${state.destination.city} · ${item.type} · ${item.provider}`; price = money(item.price); }
+    card.innerHTML = `<h4>${title}</h4><div class="muted">${subtitle}</div><div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><span class="badge">${item.tag || 'Option'}</span><div class="cta-group"><span class="badge cyan">${price}</span></div></div>`;
+    const grp = card.querySelector('.cta-group');
+    if (state.mode === 'flights' || state.mode === 'hotels') {
+      const w = document.createElement('button'); w.className='btn secondary'; w.textContent='Watch price'; w.onclick=()=>addWatch(item, state.mode === 'flights' ? 'flight' : 'hotel'); grp.appendChild(w);
+    }
+    const open = document.createElement('button'); open.className='btn secondary'; open.textContent='Open booking link'; open.onclick=openLinkNotice; grp.appendChild(open);
+    list.appendChild(card);
+  });
+  root.appendChild(list);
+}
+
+document.getElementById('save-trip-btn').addEventListener('click', () => {
+  if (!state.trip) return;
+  state.savedTrips.unshift({ id: uid(), name: `${state.destination.city} · ${state.month}`, createdAt: new Date().toLocaleDateString(), trip: state.trip, meta: { origin: state.origin.label, destination: state.destination.label, month: state.month, nights: state.nights } });
+  saveBrowserState();
+  addAlert(`${state.destination.city} · ${state.month} saved to your trips.`, 'success');
+  renderSaved();
+  setPage('saved');
+});
+
+function renderSaved() {
+  const root = document.getElementById('saved-container');
+  root.innerHTML = '';
+  if (!state.savedTrips.length) {
+    const empty = document.createElement('div'); empty.className='card'; empty.textContent='No saved trips yet. Run a search and save the current trip from Results.'; root.appendChild(empty); return;
+  }
+  const list = document.createElement('div'); list.className = 'list2';
+  state.savedTrips.forEach(t => {
+    const card = document.createElement('div'); card.className='card';
+    card.innerHTML = `<h4>${t.name}</h4><div class="muted">Saved on ${t.createdAt}</div><div class="row-card" style="margin-top:14px;"><div><strong>${t.meta.origin}</strong><div class="muted">→ ${t.meta.destination} · ${t.meta.month} · ${t.meta.nights} nights</div></div><span class="badge cyan">${money(t.trip.estimatedTotal)}</span></div>`;
+    list.appendChild(card);
+  });
+  root.appendChild(list);
+}
+
+function renderWatch() {
+  const watchRoot = document.getElementById('watchlist-container');
+  const alertsRoot = document.getElementById('alerts-container');
+  watchRoot.innerHTML = ''; alertsRoot.innerHTML = '';
+  if (!state.watchlist.length) {
+    const empty = document.createElement('div'); empty.className='muted'; empty.textContent='No active watches yet. Add one from Results.'; watchRoot.appendChild(empty);
+  } else {
+    state.watchlist.forEach(w => {
+      const row = document.createElement('div'); row.className='row-card';
+      row.innerHTML = `<div><strong>${w.label}</strong><div class="muted">Target: ${money(w.target)}</div></div><span class="badge ${w.triggered ? 'green' : 'amber'}">${w.triggered ? 'Alerted' : 'Watching'}</span>`;
+      watchRoot.appendChild(row);
+    });
+  }
+  state.alerts.forEach(a => {
+    const row = document.createElement('div'); row.className='row-card';
+    row.innerHTML = `<div>${a.text}</div><span class="badge ${a.type === 'price' ? 'green' : a.type === 'success' ? 'cyan' : ''}">${a.type}</span>`;
+    alertsRoot.appendChild(row);
+  });
+  updateStats();
+}
+
+function tickWatches() {
+  // simple simulated watch behavior tied to last search inventory
+  state.watchlist.forEach(w => {
+    const pool = w.type === 'flight' ? state.inventory.flights : state.inventory.hotels;
+    const item = pool.find(x => x.id === w.refId);
+    if (!item || w.triggered) return;
+    if (item.price <= w.target) {
+      w.triggered = true;
+      addAlert(`${w.label} reached ${money(item.price)}.`, 'price');
+    }
+  });
+  saveBrowserState();
+  if (state.page === 'watch') renderWatch();
+}
+setInterval(tickWatches, 8000);
+
+setPage('discover');
+updateTabs();
+updateSummary();
+updateStats();
+checkHealth();
+renderWatch();
+renderSaved();
+</script>
+</body>
+</html>
